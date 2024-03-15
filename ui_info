@@ -1,0 +1,15 @@
+
+using { /Fortnite.com/Devices }
+using { /Verse.org/Simulation }
+using { /UnrealEngine.com/Temporary/Diagnostics }
+using { /UnrealEngine.com/Temporary/UI }
+using { /Fortnite.com/UI }
+using { /UnrealEngine.com/Temporary/SpatialMath }
+using { /Verse.org/Colors/NamedColors }
+using { /Verse.org/Assets }
+
+# Contains information about ui, i think
+ui_info := class:
+    var Canvas : canvas = canvas{}
+    var Overlay : overlay = overlay{}
+    var MainStackBox : stack_box = stack_box{Orientation := orientation.Vertical}
