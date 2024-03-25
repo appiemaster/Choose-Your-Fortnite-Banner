@@ -1,5 +1,4 @@
 
-
 using { /Fortnite.com/Devices }
 using { /Verse.org/Simulation }
 using { /UnrealEngine.com/Temporary/Diagnostics }
@@ -13,8 +12,6 @@ using { /Verse.org/Colors }
 
 # A Verse-authored creative device that can be placed in a level
 Inventory := class():
-
-    
     # ------------------------------
     # ------------ MAPS ------------
     # ------------------------------
@@ -48,6 +45,39 @@ Inventory := class():
         "Whirl,Beatiful whirl!"=> icons.whirl,
         "War helmet,Cool war helmet!"=> icons.war_helmet
 
+    var PeopleBanner :[string]texture = map:
+        "Geralt,Geralt of rivia."=> icons.geralt,
+        "Gingy,Gingerbread!"=> icons.gingy,
+        "Gwen,Gwen from spider."=> icons.gwen,
+        "Khaby,Khaby Lame from tiktok."=> icons.khaby,
+        "Pewdiepie,Pewdiepie logo!"=> icons.pewdiepie,
+        "Prowler,Prowler from spiderman."=> icons.prowler,
+        "Spiderman,Spiderman from spiderman"=> icons.spiderman
+
+    var FoodBanners :[string]texture = map:
+        "Peanut,A nice peanut!"=> icons.peanut,
+        "Pizza,A nice pizza!"=> icons.pizza,
+        "Slapjuice,A nice cold slapjuice."=> icons.slapjuice,
+        "Tomato, Healthy tomato."=> icons.tomato
+
+    var OtherBanners :[string]texture = map:
+        "Explosion,A large explosion."=> icons.explosion,
+        "Compass,Cool compass."=> icons.compass,
+        "Fncs,FNCS Logo."=> icons.fncs,
+        "Grenade,The old grenade icon."=> icons.grenade,
+        "Tank,Large tank."=> icons.tank,
+        "Trophy,Shiny trophy."=> icons.trophy,
+        "Unreal engine,A cool game engine!"=> icons.ue,
+        "Whirl,Beatiful whirl!"=> icons.whirl,
+        "War helmet,Cool war helmet!"=> icons.war_helmet,
+        "Bee,A flying bee." => icons.bee,
+        "Cat,Scared cat!"=> icons.cat,
+        "Snail, Slimey snail."=> icons.snail,
+        "Snake,Slithery Snake."=> icons.snake
+
+    var RowsAndColsWithBtn : [button_quiet]tuple([]stack_box, string) = map{}
+
+
 
     # Map that contains all the 'equip' buttons & and the banner assigned to it.
     var EquipMap : [button_loud]texture = map{}
@@ -56,7 +86,7 @@ Inventory := class():
     var PreviewMap : [button_loud]texture = map{}
 
     # Map that contains all the 'select' buttons & and the card assigned to it.
-    var CardMap : [button_loud]overlay = map{}
+    var CardMap : [button_quiet]overlay = map{}
 
     # Useless map, too lazy to remove it though + it doesnt work without it....
     var OverlayDescMap : [string]overlay = map{}
@@ -65,6 +95,7 @@ Inventory := class():
     # ------------------------------
     var AllStackBoxes : []stack_box = array{}
     var CurrentDislayedStackboxes : []stack_box = array{}
+    var AllSections : []tuple([string]texture, string) = array{}
 
     # This is for the amount of rows and makes the scroll sytem even more dynamic (hard to explain)
     var AllIndexes : []int = array{}
@@ -104,7 +135,11 @@ Inventory := class():
 
     var MainStackBoxAlignment : horizontal_alignment = horizontal_alignment.Center
 
-    BgColorBlock : color_block = color_block{DefaultColor := Black, DefaultOpacity := 1.0}
+    PageTitleBlock : text_block = text_block{DefaultTextColor := White}
+
+    LineTextureBlock : texture_block = texture_block:
+        DefaultImage := img.gray_line
+        DefaultDesiredSize := vector2{X:= 978.299683, Y:= 2.0}
 
     # ----------------------------
     # --------- MESSAGES ---------
@@ -127,8 +162,13 @@ Inventory := class():
         DownBtn.SetText(DownButtonMsg)
         set BannerUIObj.ExitBtn = ExitBtn
         BannerUIObj.Init()
-        # for(I := 0..AmountOfRowsShown - 1):
-        #     set AllIndexes += array{I}
+        set AllSections = array:
+            (BannerMap, "All banners")
+            (PeopleBanner, "People banners")
+            (FoodBanners, "Food banners")
+            (OtherBanners, "Other")
+        Print("Initialized.")
+
 
     # Creates banner UI
     CreateBannerUI(Agent : agent):void=
@@ -162,17 +202,16 @@ Inventory := class():
 
     # Adding main UI
     AssignMainUI(Agent : agent):void=
-        if(PlayerUI := GetPlayerUI[player[Agent]]):
-            PlayerUI.AddWidget(MakeMainCanvas(Agent), player_ui_slot{InputMode := ui_input_mode.All})
+        if(PlayerUI := GetPlayerUI[player[Agent]], MainInventoryCanvas := PlayerUIInfo?.Canvas):
+            PlayerUI.AddWidget(MainInventoryCanvas, player_ui_slot{InputMode := ui_input_mode.All})
             BannerUIObj.HideMainBannerUI(Agent)
-        
+
     # Removing main UI
     RemoveMainUI(WM : widget_message):void=
         if(PlayerUI := GetPlayerUI[player[WM.Player]], PlayerCanvas := PlayerUIInfo?):
             PlayerUI.RemoveWidget(PlayerCanvas.Canvas)
             BannerUIObj.ShowMainBannerUI(WM.Player)
 
-    
     # Seperates a string into 2 strings, with the seperator being a comma.
     (InString : string).SeperateString():tuple(string,string)=
         var CommaReached : logic = false
@@ -189,28 +228,76 @@ Inventory := class():
                     set Word2 += "{Letter}" 
         return (Word1, Word2)
         
+    CreateTopImgButtons():stack_box=
+        # Stackboxes I'm adding to do
+        MyStackBox := stack_box{Orientation := orientation.Horizontal}
+        # Looping through the sections and assigning a button to each section and then button those buttons in the stackbox
+        for(ImgBlock -> SingularBannerMap : AllSections):
+            Print("Loopin'")
+            InRowsAndCols := CreateColsAndRows(SingularBannerMap(0))
+            MyButton := button_quiet{}
+            MyButton.SetText(S2M("{SingularBannerMap(1)}"))
+                MyStackBoxSlot := stack_box_slot:
+                    Widget := MyButton, Padding := margin{Left := 15.0, Right := 15.0}
+                MyStackBox.AddWidget(MyStackBoxSlot)
+            MyButton.OnClick().Subscribe(OnTopButtonClicked)
+            if(set RowsAndColsWithBtn[MyButton] = (InRowsAndCols, SingularBannerMap(1))){}
+        return MyStackBox
+
+
+    OnTopButtonClicked(WM : widget_message):void=
+        if(InStackBoxAndTitle := RowsAndColsWithBtn[WM.Source]):
+            Print("Top button Clicked.")
+            if:
+                MainStackBox := PlayerUIInfo?.MainStackBox
+            then:
+                # Collapsing the previous stackboxes
+                for(StackBoxIndex : AllStackBoxes):
+                    StackBoxIndex.SetVisibility(widget_visibility.Collapsed)
+                    Print("Collapsing all")
+                # Getting the stackbox in the tuple
+                set AllStackBoxes = InStackBoxAndTitle(0)
+                PageTitleBlock.SetText(S2M("{InStackBoxAndTitle(1)}")) # Getting the title in the tuple
+                # Resetting the currently displayed stackboxes
+                set CurrentDislayedStackboxes = array{}
+                # Looping through the new ones, making them visible and then adding them to the currently displayed stackboxes array and creating stackbox slots and adding them to the main stackbox.
+                for(ArrayIndex -> StackBoxIndex : InStackBoxAndTitle(0)):
+                    if(ArrayIndex < AmountOfRowsShown):
+                        Print("Adding stackboxes to thje screen!")
+                        set CurrentDislayedStackboxes += array{StackBoxIndex}
+                        StackBoxIndex.SetVisibility(widget_visibility.Visible)
+                        MySlot := stack_box_slot:
+                            Widget := StackBoxIndex
+                            Padding := margin{Top := 5.0}
+                            HorizontalAlignment := horizontal_alignment.Fill
+                        MainStackBox.AddWidget(MySlot)
+                ResetIndexes()
+                CurrentCard.SetVisibility(widget_visibility.Collapsed)
+                CheckScrollbar()
+
     # This function creates the first 3 rows and columns and sets everything up for the scrolling system
-    CreateColsAndRows(Agent : agent):[]stack_box=
+    CreateColsAndRows(InMap : [string]texture):[]stack_box=
+                set OverlayDescMap = map{}
         var StackBoxes : []stack_box = array{} # adding all the stackboxes in here
-        if(AmountOfRows := Ceil(BannerMap.Length / AmountOfCols)): # getting the amount of rows by dividing the banner map length by the amount of cols and then ceiling it
+        var RowNumber : int = 1
+        if(AmountOfRows := Ceil(InMap.Length / AmountOfCols)): # getting the amount of rows by dividing the banner map length by the amount of cols and then ceiling it
             Print("Amount of rows {AmountOfRows}")
             var Iterations : int  = 0  # just a var to track the iterations of the outer for loop
             for(I := 1..AmountOfRows):
                 set Iterations += 1
-                MyStackBox := stack_box{Orientation := orientation.Horizontal} # setting up a stackbox so we can add stuff to it later
+                MyStackBox := stack_box . Orientation := orientation.Horizontal # setting up a stackbox so we can add stuff to it later
 
                 # This stack box slot is basically for the row numbers
                 RowNumberSlot := stack_box_slot:
                     Widget := text_block: 
-                        DefaultText := S2M("{AllStackBoxes.Length + 1} ·") # I i do +1 because i havent added the current stack box yet, so i need to add 1 so it is right on the same amount
+                        DefaultText := S2M("{RowNumber} ·") # I i do +1 because i havent added the current stack box yet, so i need to add 1 so it is right on the same amount
                         DefaultTextColor := White
                     VerticalAlignment := vertical_alignment.Center
-                    Padding := margin{Left := 15.0}
+                    # Padding := margin{Left := 15.0}
                 MyStackBox.AddWidget(RowNumberSlot)
                 var OverlayCreatorObjs : []single_inventory_item_maker = array{} #an array full of overlay creator objects
-                Print("Iteration {I}")
-                Print("Creating Stackboxes")
-                for(Desc -> Banner : BannerMap): # looping through all the banners and descriptions
+
+                for(Desc -> Banner : InMap): # looping through all the banners and descriptions
                     if(not OverlayDescMap[Desc]): # checks if the overlay already exists.
                         if(not NeedToBreak?): # checking if we need to be break with a logic, since theres no break keyword in verse
                             OverlayObj := single_inventory_item_maker{BannerImage := Banner, BannerDesc := Desc} #creating an instnace of the class
@@ -220,7 +307,7 @@ Inventory := class():
                 for(Instance : OverlayCreatorObjs): # loopinh through all the objects i created in the previous loop
                     BannerDescAndTitle := Instance.BannerDesc # getting the description of the obj / overlay
                     # Buttons
-                    SelectButton := button_loud{}
+                    SelectButton := button_quiet{}
                     PreviewBtn := button_loud{}
                     EquipBtn := button_loud{}
                     InventoryItem := Instance.MakeInventoryItem(SelectButton) # getting the InventoryItem of the obj 
@@ -248,12 +335,8 @@ Inventory := class():
                     if(set OverlayDescMap[BannerDescAndTitle] = InventoryItem){}
                     # Putting my card in the map and putting it in a map with the Select button as key of this iteration
                     if(set CardMap[SelectButton] = CardOverlay){} # putting it in my map
-                set AllStackBoxes += array{MyStackBox}  # Then after everything is done, i put it in my array of all stackboxes
-        # Looping 3 times (Displaying only 3 rows.)
-        for(Index -> StackBox : AllStackBoxes):
-            if(CurrentDislayedStackboxes.Length < AmountOfRowsShown):
-                set StackBoxes += array{StackBox}
-                set CurrentDislayedStackboxes += array{StackBox}
+                set RowNumber += 1
+                set StackBoxes += array{MyStackBox}
         return StackBoxes
 
     # This shows the card / hides the card
@@ -303,7 +386,7 @@ Inventory := class():
                         Padding := margin{Top := 5.0}
                         HorizontalAlignment := horizontal_alignment.Fill
                     MainStackBox.AddWidget(MySlot)
-                CheckScrollbar()
+            CheckScrollbar()
 
     # Checks scrollbar status
     CheckScrollbar():void=
@@ -314,39 +397,37 @@ Inventory := class():
         if(AllIndexes[0] > 0):
             UpBtn.SetEnabled(true)
         # This means theres nothing below it, so we disable it
-        if(AllIndexes[AllIndexes.Length - 1]  = AllStackBoxes.Length - 1):
+        if(AllIndexes[AllIndexes.Length - 1]  >= AllStackBoxes.Length - 1):
             DownBtn.SetEnabled(false)
         # This means theres something below it, so we enable it
         if(AllIndexes[AllIndexes.Length - 1] < AllStackBoxes.Length - 1):
             DownBtn.SetEnabled(true)
 
 
+    # Resetting the indexes of the AllIndexes array
+    ResetIndexes():void=
+        set AllIndexes
+        for(I := 0..AmountOfRowsShown - 1):
+            set AllIndexes += array{I}
 
     # Making the main canvas
     MakeMainCanvas(Agent : agent):canvas=
-        # I reset everything, so when you go back to create the canvas again, it will not be broken.
-        set CurrentDislayedStackboxes = array{}
-        set AllStackBoxes = array{}
-        set AllIndexes = array{}
-        for(I := 0..AmountOfRowsShown - 1):
-            set AllIndexes += array{I}
-        set OverlayDescMap = map{}
+        ResetIndexes()
         CheckScrollbar()
         UIInfo := ui_info{} # Create object.
-        # Making sure not the listen for the button events multiple times.
-        if(not Called?):
-            CloseUIBtn.OnClick().Subscribe(RemoveMainUI)
-            UpBtn.OnClick().Subscribe(MoveUp)
-            DownBtn.OnClick().Subscribe(MoveDown)
-            set Called = true
+        # Listening for button click events
+        CloseUIBtn.OnClick().Subscribe(RemoveMainUI)
+        UpBtn.OnClick().Subscribe(MoveUp)
+        DownBtn.OnClick().Subscribe(MoveDown)
+
         RowsAndColsStackBox := stack_box:
             Orientation := orientation.Vertical
         ChildOverlay := overlay:
             Slots := array:
                 overlay_slot:
-                    Widget := texture_block:
-                        DefaultImage := img.gray_bg
-                        DefaultDesiredSize := vector2{X:= 1251.004517, Y:= 707.191345}
+                    Widget := color_block:
+                        DefaultColor := Black
+                        DefaultDesiredSize := vector2{X:= 1151.01001, Y:= 926.663147}
                 overlay_slot:
                     Widget := UpBtn
                     HorizontalAlignment := horizontal_alignment.Right
@@ -359,29 +440,66 @@ Inventory := class():
                     Padding := margin{Top := 15.0, Right := 25.0}
                 overlay_slot:
                     Widget := RowsAndColsStackBox
-                    HorizontalAlignment := MainStackBoxAlignment
-                    VerticalAlignment := vertical_alignment.Center
-                    Padding := margin{Right := 7.0}
-        Stackboxes := CreateColsAndRows(Agent) # Getting all the Cols And rows (Only the first 3)
+                    HorizontalAlignment := horizontal_alignment.Left
+                    VerticalAlignment := vertical_alignment.Top
+                    Padding := margin{Left := 50.0, Top := 195.0}
+                overlay_slot:
+                    Widget:= CreateTopImgButtons()
+                    HorizontalAlignment := horizontal_alignment.Left
+                    VerticalAlignment := vertical_alignment.Top
+                    Padding := margin{Top := 25.0, Left := 50.0}
+                overlay_slot:
+                    Widget:= PageTitleBlock
+                    HorizontalAlignment := horizontal_alignment.Left
+                    VerticalAlignment := vertical_alignment.Top
+                    Padding := margin{Top := 115.0, Left := 85.0}
+                overlay_slot:
+                    Widget := LineTextureBlock
+                    HorizontalAlignment := horizontal_alignment.Left
+                    VerticalAlignment := vertical_alignment.Top
+                    Padding := margin{Top := 105.0, Left := 50.0}
+                overlay_slot:
+                    Widget := texture_block:
+                        DefaultImage := img.gray_line
+                        DefaultDesiredSize := vector2{X:= 978.299683, Y:= 2.0}
+                    HorizontalAlignment := horizontal_alignment.Left
+                    VerticalAlignment := vertical_alignment.Top
+                    Padding := margin{Top := 165.0, Left := 50.0}
+        # Stackboxes := CreateColsAndRows(BannerMap) # Getting all the Cols And rows (Only the first 3)
         var Iterations : int = 0 # For debugging purposes
-        for(Stackbox : Stackboxes):
-            set Iterations += 1
-            MyOverlaySlot := stack_box_slot:
-                Widget := Stackbox
-                Padding := margin{Top := 5.0}
-                HorizontalAlignment := horizontal_alignment.Fill
-            RowsAndColsStackBox.AddWidget(MyOverlaySlot)
-            Print("Adding to the overlay, Iteration: {Iterations}")
+        var InStackBox : []stack_box =array{}
+
+        for(SingularStackBox : RowsAndColsWithBtn):
+            if(Iterations = 0):
+                set InStackBox = SingularStackBox(0)
+                PageTitleBlock.SetText(S2M("{SingularStackBox(1)}"))
+                set Iterations += 1
+                Print("Hey~!")
+        set AllStackBoxes = InStackBox
+        for(Index -> Stackbox : InStackBox):
+            if(Index < AmountOfRowsShown):
+                set Iterations += 1
+                MyOverlaySlot := stack_box_slot:
+                    Widget := Stackbox
+                    Padding := margin{Top := 5.0}
+                    HorizontalAlignment := horizontal_alignment.Fill
+                RowsAndColsStackBox.AddWidget(MyOverlaySlot)
+                Print("Adding to the overlay, Iteration: {Iterations}")
+
         MainOverlay := overlay:
             Slots := array:
                 overlay_slot:
-                    Widget := texture_block:
-                        DefaultImage := img.black_transparent_bg
-                        DefaultDesiredSize := vector2{X:= 1304.278687, Y:= 778.797546}
+                    Widget := color_block:
+                        DefaultColor := Gray
+                        DefaultOpacity := 0.9
+                    HorizontalAlignment := horizontal_alignment.Fill
+                    VerticalAlignment := vertical_alignment.Fill
+                    
                 overlay_slot:
                     Widget := ChildOverlay
-                    HorizontalAlignment := horizontal_alignment.Center
+                    HorizontalAlignment := horizontal_alignment.Left
                     VerticalAlignment := vertical_alignment.Center
+                    Padding := margin{Left := 200.0, Top := 25.0}
                 overlay_slot:
                     Widget := CloseUIBtn
                     HorizontalAlignment := horizontal_alignment.Right
@@ -391,12 +509,6 @@ Inventory := class():
             Slots := array:
                 canvas_slot:
                     Widget := MainOverlay
-                    Anchors := anchors{Minimum := vector2{X:= 0.0, Y:= 0.5}, Maximum := vector2{X:= 0.0, Y:= 0.5}}
-                    Alignment := vector2{X := -0.019823, Y:= 0.495584}
-                canvas_slot:
-                    Widget := color_block:
-                        DefaultColor := Black
-                        DefaultOpacity := 0.6
                     Anchors := anchors{Minimum := vector2{X:= 0.0, Y:= 0.0}, Maximum := vector2{X:= 1.0, Y:= 1.0}}
         # Here i create all the cards, but then collapse them, so you wont see them. That way, all we have to do is hide them / make them visible again which in turn makes the UI much more responsive.
         for(Button -> Overlay : CardMap):
@@ -404,12 +516,11 @@ Inventory := class():
             MyCanvasSlot := canvas_slot:
                 Widget := Overlay
                 Anchors := anchors{Minimum := vector2{X:= 1.0, Y:= 0.5}, Maximum := vector2{X:= 1.0, Y:= 0.5}}
-                Alignment := vector2{X := 1.101819, Y:= 0.505496}
+                Alignment := vector2{X := 1.215596, Y:= 0.495496}
             MyCanvas.AddWidget(MyCanvasSlot)
         set UIInfo.Canvas = MyCanvas
         set UIInfo.MainStackBox = RowsAndColsStackBox
         set PlayerUIInfo = option{UIInfo}
+        CheckScrollbar()
         return MyCanvas
-        
 
-        
