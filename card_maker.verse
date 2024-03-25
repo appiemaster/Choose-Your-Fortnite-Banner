@@ -1,3 +1,4 @@
+
 using { /Fortnite.com/Devices }
 using { /Verse.org/Simulation }
 using { /UnrealEngine.com/Temporary/Diagnostics }
@@ -32,7 +33,7 @@ card_maker := class:
 
     # All messages
     DescriptionDefaultMsg<localizes>:message = "Banner description:"
-    CloseMessage<localizes>:message = "❌"
+    CloseMessage<localizes>:message = "CLOSE"
     EquipMessage<localizes>:message = "EQUIP"
     PreviewMessage<localizes>:message = "PREVIEW"
 
@@ -97,8 +98,8 @@ card_maker := class:
             Slots := array:
                 overlay_slot:
                     Widget := texture_block:
-                        DefaultImage := img.black_transparent_bg
-                        DefaultDesiredSize := vector2{X:= 440.624298,Y:= 924.500549}
+                        DefaultImage :=  img.black_transparent_bg
+                        DefaultDesiredSize := vector2{X:= 443.174377,Y:= 863.129333}
                 overlay_slot:
                     Widget :=BannerOverlay
                     Padding := margin{Top := 100.0}
