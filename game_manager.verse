@@ -1,4 +1,5 @@
 
+
 using { /Fortnite.com/Devices }
 using { /Verse.org/Simulation }
 using { /UnrealEngine.com/Temporary/Diagnostics }
@@ -21,11 +22,11 @@ game_manager := class(creative_device):
 
     @editable:
         ToolTip := ColMessage
-    var AmountOfCols : type{_X:int where 1 <= _X, _X <= 4} = 4
+    var AmountOfCols : type{_X:int where 1 <= _X, _X <= 5} = 4
 
     @editable:
         ToolTip := RowMessage
-    var AmountOfRows : type{_X:int where 1 <= _X, _X <= 4} = 3
+    var AmountOfRows : type{_X:int where 1 <= _X, _X <= 5} = 3
     
     SomeMSg<localizes>:message = "With this you can choose where the items will be aligned. Recommended is left, most of the time."
     RowMessage<localizes>:message = "Select the amount of rows. 3 is recommended."
@@ -69,8 +70,9 @@ game_manager := class(creative_device):
 
     InitAgents(Agent : agent):void=
         if(not InventoryMap[Agent]):
-            InventoryObj := Inventory{AmountOfCols := AmountOfCols,MainStackBoxAlignment := ItemsPos, AmountOfRowsShown := AmountOfRows}
+            InventoryObj := Inventory{AmountOfCols := AmountOfCols,MainStackBoxAlignment := horizontal_alignment.Center, AmountOfRowsShown :=AmountOfRows}
             InventoryObj.Init()
+            InventoryObj.MakeMainCanvas(Agent)
             InventoryObj.CreateBannerUI(Agent)
             if(set InventoryMap[Agent] = InventoryObj){} 
             Print("set")
