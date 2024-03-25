@@ -16,32 +16,19 @@ single_inventory_item_maker := class:
     # The image of the banner
     BannerImage : texture = icons.cat
 
-    # Message of the select button
-    BtnSelectMsg<localizes>:message = "select"
-
     # The description of the banner.
     BannerDesc : string
 
     # Here we make the single inventory item, based off of the information given
-    MakeInventoryItem(Button : button_loud):overlay=
-        Button.SetText(BtnSelectMsg)
+    MakeInventoryItem(Button : button_quiet):overlay=
         MyOverlay := overlay:
             Slots := array:
                 overlay_slot:
                     Widget := texture_block:
-                        DefaultImage := img.gradient_bg
-                        DefaultDesiredSize := vector2{X:= 250.0, Y := 215.0}
+                        DefaultImage := BannerImage
+                        DefaultDesiredSize := vector2{X:= 171.375336, Y:= 146.466843}
                 overlay_slot:
                     Widget := Button
-                    HorizontalAlignment := horizontal_alignment.Center
-                    VerticalAlignment := vertical_alignment.Bottom
-                    Padding := margin{Bottom := 15.0}
-                overlay_slot:
-                    Widget := texture_block:
-                        DefaultImage := BannerImage
-                        DefaultDesiredSize := vector2{X:= 143.063248, Y:= 88.273758}
-                    HorizontalAlignment := horizontal_alignment.Center
-                    VerticalAlignment := vertical_alignment.Top
-                    Padding := margin{Top := 15.0}
+                    HorizontalAlignment := horizontal_alignment.Fill
+                    VerticalAlignment := vertical_alignment.Fill
         return MyOverlay
-
